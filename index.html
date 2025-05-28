@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>TVmaze Multi SPA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --primary: #2c3e50;
+      --accent: #3498db;
+      --bg: #f4f4f4;
+      --card-bg: #fff;
+      --shadow: 0 2px 8px rgba(44,62,80,0.09);
+    }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--bg);
+      margin: 0;
+      color: var(--primary);
+    }
+    header, footer {
+      background: var(--primary);
+      color: #fff;
+      text-align: center;
+      padding: 1.2rem;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 1.2rem;
+      background: #1a2332;
+      padding: 0.7rem 0;
+    }
+    nav button {
+      background: none;
+      color: #fff;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: 500;
+      border-bottom: 2px solid transparent;
+      transition: border-bottom 0.2s;
+      padding-bottom: 2px;
+    }
+    nav button.active, nav button:hover {
+      border-bottom: 2px solid var(--accent);
+      color: var(--accent);
+    }
+    .section-container {
+      min-height: 350px;
+      padding: 1.5rem 0.5rem;
+      max-width: 1200px;
+      margin: auto;
+    }
+    .series-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.3rem;
+      margin-top: 1rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.15s;
+    }
+    .card:hover {
+      transform: scale(1.04);
+      box-shadow: 0 4px 18px rgba(52,152,219,0.13);
+    }
+    .card img {
+      width: 100%;
+      height: 280px;
+      object-fit: cover;
+      background: #eaeaea;
+    }
+    .card-content {
+      padding: 1rem 1rem 0.8rem 1rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .card h3 {
+      margin: 0.5rem 0 0.2rem 0;
+      font-size: 1.18rem;
+      color: var(--accent);
+      text-align: left;
+    }
+    .genres {
+      color: #555;
+      font-size: 0.98rem;
+      margin-bottom: 0.6rem;
+    }
+    .summary {
+      font-size: 0.98rem;
+      margin-bottom: 0.7rem;
+      color: #444;
+      flex: 1;
+    }
+    .official-link {
+      text-align: right;
+      margin-top: 0.2rem;
+    }
+    .official-link a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 0.98rem;
+    }
+    /* Nuevos estilos para tabs */
+    .cast-list, .crew-list, .images-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.1rem;
+      margin-top: 1.4rem;
+      padding: 0;
+      list-style: none;
+    }
+    .cast-list li, .crew-list li, .images-list li {
+      background: #fff;
+      box-shadow: var(--shadow);
+      padding: 1rem;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .cast-list img, .crew-list img, .images-list img {
+      width: 90px;
+      height: 90px;
+      object-fit: cover;
+      border-radius: 50%;
+      margin-bottom: 0.6rem;
+      background: #eee;
+    }
+    .images-list img {
+      width: 100%;
+      height: 220px;
+      border-radius: 12px;
+      margin-bottom: 0.4rem;
+      object-fit: cover;
+    }
+    .rol, .tipo {
+      font-size: 0.98rem;
+      color: #444;
+    }
+    @media (max-width: 700px) {
+      .series-grid, .cast-list, .crew-list, .images-list { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+      .card img, .images-list img { height: 130px; }
+      .card-content { padding: 0.6rem 0.4rem; }
+    }
+    @media (max-width: 480px) {
+      nav { gap: 0.5rem; }
+      header h1 { font-size: 1.2rem; }
+      .section-container { padding: 1rem 0.2rem; }
+    }
+    footer a { color: #e1bfff; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📺 TVmaze Multi SPA</h1>
+  </header>
+  <nav>
+    <button id="navCatalogo" class="active">Catálogo</button>
+    <button id="navCast">Cast</button>
+    <button id="navCrew">Crew</button>
+    <button id="navImages">Imágenes</button>
+  </nav>
+  <main>
+    <div class="section-container">
+      <section id="vistaCatalogo"></section>
+      <section id="vistaCast" style="display:none;"></section>
+      <section id="vistaCrew" style="display:none;"></section>
+      <section id="vistaImages" style="display:none;"></section>
+    </div>
+  </main>
+  <footer>
+    <p>© 2024 · Demo SPA · <a href="https://www.tvmaze.com/api" target="_blank">TVmaze API</a></p>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    // Navegación
+    const navCatalogo = document.getElementById("navCatalogo");
+    const navCast = document.getElementById("navCast");
+    const navCrew = document.getElementById("navCrew");
+    const navImages = document.getElementById("navImages");
+    const vistaCatalogo = document.getElementById("vistaCatalogo");
+    const vistaCast = document.getElementById("vistaCast");
+    const vistaCrew = document.getElementById("vistaCrew");
+    const vistaImages = document.getElementById("vistaImages");
+
+    function activarVista(seccion) {
+      [navCatalogo, navCast, navCrew, navImages].forEach(btn => btn.classList.remove("active"));
+      [vistaCatalogo, vistaCast, vistaCrew, vistaImages].forEach(sec => sec.style.display = "none");
+      if (seccion === "catalogo") {
+        navCatalogo.classList.add("active");
+        vistaCatalogo.style.display = "";
+      } else if (seccion === "cast") {
+        navCast.classList.add("active");
+        vistaCast.style.display = "";
+      } else if (seccion === "crew") {
+        navCrew.classList.add("active");
+        vistaCrew.style.display = "";
+      } else if (seccion === "images") {
+        navImages.classList.add("active");
+        vistaImages.style.display = "";
+      }
+    }
+
+    navCatalogo.onclick = () => { activarVista("catalogo"); };
+    navCast.onclick = () => { activarVista("cast"); };
+    navCrew.onclick = () => { activarVista("crew"); };
+    navImages.onclick = () => { activarVista("images"); };
+
+    // VISTA 1: Catálogo
+    async function cargarCatalogo() {
+      vistaCatalogo.innerHTML = "<div style='text-align:center;'>Cargando series...</div>";
+      try {
+        const res = await axios.get('https://api.tvmaze.com/shows?page=0');
+        const series = res.data;
+        let html = '<div class="series-grid">';
+        series.forEach(serie => {
+          const imagen = serie.image?.medium || "https://via.placeholder.com/210x295?text=No+Image";
+          const genres = serie.genres && serie.genres.length ? serie.genres.join(", ") : "Sin géneros";
+          const resumen = serie.summary ? serie.summary.replace(/<[^>]+>/g, '') : "Sin resumen.";
+          const linkOficial = serie.officialSite || serie.url;
+          html += `
+            <div class="card">
+              <img src="${imagen}" alt="${serie.name}">
+              <div class="card-content">
+                <h3>${serie.name}</h3>
+                <div class="genres"><b>Géneros:</b> ${genres}</div>
+                <div class="summary">${resumen.length > 140 ? resumen.substring(0, 140) + "..." : resumen}</div>
+                <div class="official-link"><a href="${linkOficial}" target="_blank">Ver más</a></div>
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+        vistaCatalogo.innerHTML = html;
+      } catch (err) {
+        vistaCatalogo.innerHTML = "<div style='color:red; text-align:center;'>No se pudo cargar el catálogo.</div>";
+      }
+    }
+
+    // VISTA 2: CAST
+    async function cargarCast() {
+      vistaCast.innerHTML = "<div style='text-align:center;'>Cargando cast...</div>";
+      try {
+        const res = await axios.get('https://api.tvmaze.com/shows/1/cast');
+        const cast = res.data;
+        if (!cast.length) {
+          vistaCast.innerHTML = "<div style='text-align:center;'>No hay datos del cast para esta serie.</div>";
+          return;
+        }
+        let html = `<h2 style="color:var(--accent);">Cast de "Under the Dome"</h2>
+        <ul class="cast-list">`;
+        cast.forEach(personaje => {
+          const actor = personaje.person;
+          const character = personaje.character;
+          const imagen = actor.image?.medium || "https://via.placeholder.com/90x90?text=No+Img";
+          html += `
+            <li>
+              <img src="${imagen}" alt="${actor.name}">
+              <div><b>${actor.name}</b></div>
+              <div class="rol">Personaje: ${character.name}</div>
+            </li>
+          `;
+        });
+        html += '</ul>';
+        vistaCast.innerHTML = html;
+      } catch (err) {
+        vistaCast.innerHTML = "<div style='color:red; text-align:center;'>No se pudo cargar el cast.</div>";
+      }
+    }
+
+    // VISTA 3: CREW
+    async function cargarCrew() {
+      vistaCrew.innerHTML = "<div style='text-align:center;'>Cargando crew...</div>";
+      try {
+        const res = await axios.get('https://api.tvmaze.com/shows/1/crew');
+        const crew = res.data;
+        if (!crew.length) {
+          vistaCrew.innerHTML = "<div style='text-align:center;'>No hay datos del crew para esta serie.</div>";
+          return;
+        }
+        let html = `<h2 style="color:var(--accent);">Crew de "Under the Dome"</h2>
+        <ul class="crew-list">`;
+        crew.forEach(miembro => {
+          const person = miembro.person;
+          const tipo = miembro.type;
+          const imagen = person.image?.medium || "https://via.placeholder.com/90x90?text=No+Img";
+          html += `
+            <li>
+              <img src="${imagen}" alt="${person.name}">
+              <div><b>${person.name}</b></div>
+              <div class="tipo">Rol: ${tipo}</div>
+            </li>
+          `;
+        });
+        html += '</ul>';
+        vistaCrew.innerHTML = html;
+      } catch (err) {
+        vistaCrew.innerHTML = "<div style='color:red; text-align:center;'>No se pudo cargar el crew.</div>";
+      }
+    }
+
+    // VISTA 4: IMAGES
+    async function cargarImages() {
+      vistaImages.innerHTML = "<div style='text-align:center;'>Cargando imágenes...</div>";
+      try {
+        const res = await axios.get('https://api.tvmaze.com/shows/1/images');
+        const images = res.data;
+        if (!images.length) {
+          vistaImages.innerHTML = "<div style='text-align:center;'>No hay imágenes adicionales para esta serie.</div>";
+          return;
+        }
+        let html = `<h2 style="color:var(--accent);">Imágenes de "Under the Dome"</h2>
+        <ul class="images-list">`;
+        images.forEach(img => {
+          html += `
+            <li>
+              <img src="${img.resolutions?.medium?.url || img.resolutions?.original?.url}" alt="Poster">
+              <div style="margin-top:0.4rem;">${img.type || "Sin tipo"}</div>
+            </li>
+          `;
+        });
+        html += '</ul>';
+        vistaImages.innerHTML = html;
+      } catch (err) {
+        vistaImages.innerHTML = "<div style='color:red; text-align:center;'>No se pudieron cargar las imágenes.</div>";
+      }
+    }
+
+    // Inicialización
+    cargarCatalogo();
+    cargarCast();
+    cargarCrew();
+    cargarImages();
+
+    // Por defecto activa catálogo
+    activarVista("catalogo");
+  </script>
+</body>
+</html>
